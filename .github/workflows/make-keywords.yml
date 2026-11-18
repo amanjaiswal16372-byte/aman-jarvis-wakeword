@@ -1,0 +1,44 @@
+name: Generate JARVIS Keywords
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Sherpa
+        run: pip install sherpa-onnx
+
+      - name: Generate Keywords
+        run: |
+          sherpa-onnx-cli text2token \
+            --tokens tokens.txt \
+            --tokens-type bpe \
+            --bpe-model bpe.model \
+            keywords_raw.txt keywords.txt
+
+          echo "Generated Keywords:"
+          cat keywords.txt
+
+      - name: Save Keywords
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add keywords.txt
+          if ! git diff --cached --quiet; then
+            git commit -m "Generate JARVIS keywords"
+            git push
+          fi
